@@ -1,0 +1,12 @@
+###
+POST http://localhost:4000/api/v1/patients
+Content-Type: application/json
+
+{
+  "name": "some joe_11",
+  "email": "some@emial.com",
+  "address": "12354 main street",
+  "dateOfBirth": "1995-09-01",
+  "registeredDate" : "2024-03-01"
+}
+###
