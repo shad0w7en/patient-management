@@ -5,6 +5,7 @@ import com.pm.patientservice.dto.PatientResponseDTO;
 import com.pm.patientservice.exception.EmailAlreadyExistException;
 import com.pm.patientservice.exception.PatientNotFoundException;
 import com.pm.patientservice.grpc.BillingServiceGrpcClient;
+import com.pm.patientservice.kafka.kafkaProducer;
 import com.pm.patientservice.mapper.PatientMapper;
 import com.pm.patientservice.model.Patient;
 import com.pm.patientservice.repository.PatientRepository;
@@ -18,10 +19,14 @@ public class PatientService {
 
     private final PatientRepository patientRepository;
     private final BillingServiceGrpcClient billingServiceGrpcClient;
+    private final kafkaProducer kafkaProducer;
 
-    public PatientService(PatientRepository patientRepository ,  BillingServiceGrpcClient billingServiceGrpcClient) {
+
+    public PatientService(PatientRepository patientRepository , BillingServiceGrpcClient billingServiceGrpcClient,
+                          kafkaProducer kafkaProducer) {
         this.patientRepository = patientRepository;
         this.billingServiceGrpcClient = billingServiceGrpcClient;
+        this.kafkaProducer = kafkaProducer;
     }
 
     public List<PatientResponseDTO> findAll() {
@@ -36,13 +41,16 @@ public class PatientService {
         }
         Patient patient = patientRepository.save(PatientMapper.toPatient(patientRequestDTO));
 
-        billingServiceGrpcClient.createBillingAccount(patient.getId().toString() , patient.getName() , patient.getEmail());
+        kafkaProducer.sendEvent(patient);
+
+        billingServiceGrpcClient.createBillingAccount(patient.getId().toString() , patient.getName() ,
+                patient.getEmail());
         return PatientMapper.toPatientResponseDTO(patient);
     }
 
     public PatientResponseDTO updatePatient(Long id, PatientRequestDTO patientRequestDTO) {
-        Patient patient = patientRepository.findById(id).orElseThrow(() -> new PatientNotFoundException("Patient not " +
-                "found with id : " + id));
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new PatientNotFoundException("Patient not " + "found with id : " + id));
 
         if (patientRepository.existsByEmailAndIdNot(patientRequestDTO.getEmail(),
                 id)) {
@@ -63,8 +71,8 @@ public class PatientService {
     }
 
     public void deletePatient(Long id) {
-        Patient patient = patientRepository.findById(id).orElseThrow(() -> new PatientNotFoundException("Patient not " +
-                "found with id : " + id));
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new PatientNotFoundException("Patient not " + "found with id : " + id));
         patientRepository.delete(patient);
     }
 }
