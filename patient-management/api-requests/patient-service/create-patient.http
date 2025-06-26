@@ -3,8 +3,8 @@ POST http://localhost:4000/api/v1/patients
 Content-Type: application/json
 
 {
-  "name": "new joe_12",
-  "email": "s1oome@esmial.com",
+  "name": "new001 joe_12 kafka",
+  "email": "kafka@esmial.com",
   "address": "12354 main street",
   "dateOfBirth": "1995-09-01",
   "registeredDate" : "2024-03-01"
